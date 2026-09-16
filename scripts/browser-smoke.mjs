@@ -173,6 +173,91 @@ if (process.env.CHECK_OFFLINE === "1") {
   mark("Offline reload preserves preparation and live local routing");
   await context.setOffline(false);
 }
+await page.getByRole("combobox", { name: "Demo district" }).click();
+await page
+  .getByRole("option", { name: "North Industrial", exact: true })
+  .click();
+assert.match(await page.locator(".journey-result").innerText(), /850 m/);
+assert.match(await page.locator(".journey-result").innerText(), /550 m beyond/);
+assert.equal(
+  await page
+    .getByRole("slider", { name: "Maximum distance between rests" })
+    .getAttribute("aria-valuenow"),
+  "300",
+);
+assert.equal(await page.locator(".route-line").count(), 0);
+await page.screenshot({
+  path: "work/qa/screens/north-industrial.png",
+  fullPage: true,
+});
+mark("District switch preserves rest limit and computes network shortfall");
+await page
+  .getByRole("button", { name: "View Depot community room", exact: true })
+  .click();
+await page
+  .getByRole("button", { name: "Mark unavailable & recalculate" })
+  .click();
+await page.keyboard.press("Escape");
+assert.match(await page.locator(".journey-result").innerText(), /1450 m/);
+mark("Sparse district closure recomputes nearest seated stop");
+await page.setViewportSize({ width: 390, height: 844 });
+assert.equal(
+  await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
+  false,
+);
+await page.screenshot({
+  path: "work/qa/screens/north-mobile.png",
+  fullPage: true,
+});
+await page.setViewportSize({ width: 1440, height: 1050 });
+await page.getByRole("combobox", { name: "Demo district" }).click();
+await page.getByRole("option", { name: "Riverside", exact: true }).click();
+assert.ok(await page.locator(".route-line").isVisible());
+mark("Switching back restores Riverside graph without corridor closures");
+await page.getByRole("combobox", { name: "Demo district" }).click();
+await page
+  .getByRole("option", { name: "North Industrial", exact: true })
+  .click();
+await page.getByRole("combobox", { name: "Starting point" }).click();
+await page
+  .getByRole("option", { name: "Depot community room", exact: true })
+  .click();
+await page.getByRole("combobox", { name: "Destination" }).click();
+await page
+  .getByRole("option", { name: "Workers’ rest shelter", exact: true })
+  .click();
+await page
+  .getByRole("slider", { name: "Maximum distance between rests" })
+  .focus();
+await page.keyboard.press("End");
+await page.getByRole("button", { name: "Save journey", exact: true }).click();
+await page.getByRole("combobox", { name: "Demo district" }).click();
+await page.getByRole("option", { name: "Riverside", exact: true }).click();
+await page
+  .getByRole("button", { name: "Open saved journey", exact: true })
+  .click();
+await page
+  .getByRole("button", { name: "Restore preferences", exact: true })
+  .click();
+assert.match(
+  await page.getByRole("combobox", { name: "Demo district" }).innerText(),
+  /North Industrial/,
+);
+assert.ok(await page.locator(".route-line").isVisible());
+await page.reload({ waitUntil: "networkidle" });
+await page
+  .getByRole("button", { name: "Open saved journey", exact: true })
+  .click();
+await page
+  .getByRole("button", { name: "Restore preferences", exact: true })
+  .click();
+assert.match(
+  await page.getByRole("combobox", { name: "Demo district" }).innerText(),
+  /North Industrial/,
+);
+mark(
+  "Saved North Industrial journey restores its district across switches and reload",
+);
 assert.deepEqual(errors, []);
 mark("No browser runtime errors");
 writeFileSync(

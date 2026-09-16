@@ -52,3 +52,7 @@ End on the route and its rest stops.
 - Keep important text readable in the final video.
 - Check the exported card before recording the offline segment.
 - Test the hosted demo in a signed-out browser before submitting its URL.
+
+## Optional 20-second district comparison
+
+After the Riverside reroute, switch to North Industrial with the same 300 m rest requirement: “Same person. Same needs. Different neighborhood. Here the first place to sit is 850 metres away. The planner tells us the infrastructure cannot meet this requirement.” Switch back to Riverside before saving. Replace 20 seconds of the existing explanation to remain under four minutes. The earlier exported video predates this feature.

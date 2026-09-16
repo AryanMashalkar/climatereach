@@ -44,3 +44,7 @@ The Sites/Vinext starter and reusable third-party UI components existed before t
 - Publish this repository publicly after restoring GitHub authentication.
 - Confirm the submitted demo URL is accessible to judges without owner-only sign-in.
 - Add genuine user feedback only after obtaining it and permission to quote it.
+
+## Two-district demonstration
+
+Switch from Riverside to North Industrial while keeping the 300 m rest limit. The same engine finds no feasible corridor journey and computes the nearest seated stop at 850 m, a 550 m shortfall. Close that stop and the nearest becomes 1,450 m. Both districts are synthetic. This demonstrates infrastructure gaps without assigning a medical risk score.

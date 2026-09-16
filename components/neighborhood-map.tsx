@@ -8,20 +8,25 @@ import {
   stopAvailable,
   shadeAt,
 } from "@/lib/neighborhood";
+import { getDistrict, type District } from "@/lib/districts";
 import type { Route, Preferences } from "@/lib/routing";
 export default function NeighborhoodMap({
+  district = getDistrict(),
   route,
   baseline,
   selected,
   onSelect,
   preferences: p,
 }: {
+  district?: District;
   route: Route | null;
   baseline: Route | null;
   selected: string | null;
   onSelect: (id: string) => void;
   preferences: Preferences;
 }) {
+  const { nodeById, edges, stops } = district;
+  const north = district.id === "north-industrial";
   const [zoom, setZoom] = useState(1);
   const [shade, setShade] = useState(true);
   const points = (r: Route) =>
@@ -31,7 +36,7 @@ export default function NeighborhoodMap({
       <svg
         className="neighborhood-svg"
         viewBox="0 0 1040 650"
-        aria-label="Interactive schematic map of fictional Riverside district"
+        aria-label={`Interactive schematic map of fictional ${district.name} district`}
       >
         <defs>
           <pattern
@@ -70,87 +75,113 @@ export default function NeighborhoodMap({
         <g
           transform={`translate(${520 * (1 - zoom)} ${325 * (1 - zoom)}) scale(${zoom})`}
         >
-          <path
-            d="M -50 540 C180 555 260 600 460 555 S810 570 1110 490 L1110 750 L-50 750Z"
-            fill="#c0d9d5"
-          />
-          <path
-            d="M -50 540 C180 555 260 600 460 555 S810 570 1110 490 L1110 750 L-50 750Z"
-            fill="url(#water)"
-          />
-          <path
-            d="M-20 525 C200 540 270 585 460 540 S830 550 1080 475"
-            fill="none"
-            stroke="#d6d4c3"
-            strokeWidth="8"
-          />
-          <text
-            x="550"
-            y="610"
-            className="river-label"
-            transform="rotate(-5 550 610)"
-          >
-            R I V E R W I L L O W
-          </text>
-          <rect
-            x="280"
-            y="158"
-            width="245"
-            height="78"
-            rx="28"
-            fill="#d1dfc1"
-          />
-          <rect
-            x="280"
-            y="158"
-            width="245"
-            height="78"
-            rx="28"
-            fill="none"
-            stroke="#bfcca9"
-            strokeDasharray="3 4"
-          />
-          <text x="402" y="202" className="park-label">
-            WILLOW GARDENS
-          </text>
-          <path d="M550 150h118v82H550z" fill="#dce5ce" />
-          <path d="M15 80h75v370H15z" fill="#dde5d3" />
-          {Array.from({ length: 15 }, (_, i) => {
-            const c = i % 5,
-              r = Math.floor(i / 5);
-            return (
-              <g
-                key={i}
-                transform={`translate(${151 + c * 140} ${152 + r * 125})`}
+          {!north && (
+            <>
+              <path
+                d="M -50 540 C180 555 260 600 460 555 S810 570 1110 490 L1110 750 L-50 750Z"
+                fill="#c0d9d5"
+              />
+              <path
+                d="M -50 540 C180 555 260 600 460 555 S810 570 1110 490 L1110 750 L-50 750Z"
+                fill="url(#water)"
+              />
+              <path
+                d="M-20 525 C200 540 270 585 460 540 S830 550 1080 475"
+                fill="none"
+                stroke="#d6d4c3"
+                strokeWidth="8"
+              />
+              <text
+                x="550"
+                y="610"
+                className="river-label"
+                transform="rotate(-5 550 610)"
               >
-                {!(r === 0 && (c === 1 || c === 2)) && (
-                  <>
-                    <rect
-                      x="3"
-                      y="4"
-                      width="92"
-                      height="75"
-                      rx="5"
-                      fill="#d1cec4"
-                    />
-                    <rect
-                      width="92"
-                      height="75"
-                      rx="5"
-                      fill={i % 4 === 0 ? "#d6d7ca" : "#e1ded4"}
-                      stroke="#cfcec1"
-                    />
-                    <path
-                      d="M10 8H83V30H10z M10 40H40V65H10z M49 40H83V65H49z"
-                      fill="#eae7de"
-                      stroke="#d4d2c7"
-                      strokeWidth=".6"
-                    />
-                  </>
-                )}
-              </g>
-            );
-          })}
+                R I V E R W I L L O W
+              </text>
+              <rect
+                x="280"
+                y="158"
+                width="245"
+                height="78"
+                rx="28"
+                fill="#d1dfc1"
+              />
+              <rect
+                x="280"
+                y="158"
+                width="245"
+                height="78"
+                rx="28"
+                fill="none"
+                stroke="#bfcca9"
+                strokeDasharray="3 4"
+              />
+              <text x="402" y="202" className="park-label">
+                WILLOW GARDENS
+              </text>
+              <path d="M550 150h118v82H550z" fill="#dce5ce" />
+              <path d="M15 80h75v370H15z" fill="#dde5d3" />
+              {Array.from({ length: 15 }, (_, i) => {
+                const c = i % 5,
+                  r = Math.floor(i / 5);
+                return (
+                  <g
+                    key={i}
+                    transform={`translate(${151 + c * 140} ${152 + r * 125})`}
+                  >
+                    {!(r === 0 && (c === 1 || c === 2)) && (
+                      <>
+                        <rect
+                          x="3"
+                          y="4"
+                          width="92"
+                          height="75"
+                          rx="5"
+                          fill="#d1cec4"
+                        />
+                        <rect
+                          width="92"
+                          height="75"
+                          rx="5"
+                          fill={i % 4 === 0 ? "#d6d7ca" : "#e1ded4"}
+                          stroke="#cfcec1"
+                        />
+                        <path
+                          d="M10 8H83V30H10z M10 40H40V65H10z M49 40H83V65H49z"
+                          fill="#eae7de"
+                          stroke="#d4d2c7"
+                          strokeWidth=".6"
+                        />
+                      </>
+                    )}
+                  </g>
+                );
+              })}
+            </>
+          )}
+          {north && (
+            <g>
+              <text x="520" y="125" textAnchor="middle" className="river-label">
+                NORTH INDUSTRIAL CORRIDOR
+              </text>
+              <text x="520" y="165" textAnchor="middle" className="place-label">
+                Same needs. Fewer places to pause.
+              </text>
+              {[0, 1, 2, 3].map((i) => (
+                <rect
+                  key={i}
+                  x={155 + i * 190}
+                  y="305"
+                  width="115"
+                  height="90"
+                  rx="5"
+                  fill="#dad5c9"
+                  stroke="#c8c1b1"
+                />
+              ))}
+            </g>
+          )}
           {edges.map((e) => {
             const a = nodeById[e.from],
               b = nodeById[e.to];
@@ -214,55 +245,59 @@ export default function NeighborhoodMap({
               </g>
             );
           })}
-          {Array.from({ length: 33 }, (_, i) => {
-            const x = 155 + (i % 11) * 63,
-              y = i < 11 ? 239 : i < 22 ? 280 : 112;
-            return (
-              <g key={i}>
-                <ellipse
-                  cx={x + 4}
-                  cy={y + 4}
-                  rx="11"
-                  ry="8"
-                  fill="#638d58"
-                  opacity=".12"
-                />
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={i % 3 === 0 ? 10 : 7}
-                  fill={i % 2 ? "#b0c99b" : "#bed2aa"}
-                />
-                <circle
-                  cx={x - 2}
-                  cy={y - 2}
-                  r="4"
-                  fill="#ccdbb9"
-                  opacity=".7"
-                />
+          {!north && (
+            <>
+              {Array.from({ length: 33 }, (_, i) => {
+                const x = 155 + (i % 11) * 63,
+                  y = i < 11 ? 239 : i < 22 ? 280 : 112;
+                return (
+                  <g key={i}>
+                    <ellipse
+                      cx={x + 4}
+                      cy={y + 4}
+                      rx="11"
+                      ry="8"
+                      fill="#638d58"
+                      opacity=".12"
+                    />
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r={i % 3 === 0 ? 10 : 7}
+                      fill={i % 2 ? "#b0c99b" : "#bed2aa"}
+                    />
+                    <circle
+                      cx={x - 2}
+                      cy={y - 2}
+                      r="4"
+                      fill="#ccdbb9"
+                      opacity=".7"
+                    />
+                  </g>
+                );
+              })}
+              <g className="street-labels">
+                <text x="480" y="139">
+                  FERN LANE
+                </text>
+                <text x="630" y="263">
+                  CANOPY WALK
+                </text>
+                <text x="280" y="388">
+                  RIVERSIDE AVENUE
+                </text>
+                <text x="590" y="514">
+                  MARKET STREET
+                </text>
+                <text x="78" y="300" transform="rotate(-90 78 300)">
+                  WILLOW STREET
+                </text>
+                <text x="899" y="310" transform="rotate(-90 899 310)">
+                  EASTBANK ROAD
+                </text>
               </g>
-            );
-          })}
-          <g className="street-labels">
-            <text x="480" y="139">
-              FERN LANE
-            </text>
-            <text x="630" y="263">
-              CANOPY WALK
-            </text>
-            <text x="280" y="388">
-              RIVERSIDE AVENUE
-            </text>
-            <text x="590" y="514">
-              MARKET STREET
-            </text>
-            <text x="78" y="300" transform="rotate(-90 78 300)">
-              WILLOW STREET
-            </text>
-            <text x="899" y="310" transform="rotate(-90 899 310)">
-              EASTBANK ROAD
-            </text>
-          </g>
+            </>
+          )}
           {baseline && (
             <polyline
               points={points(baseline)}
@@ -383,29 +418,46 @@ export default function NeighborhoodMap({
               </g>
             );
           })}
-          <g transform="translate(870 90)">
-            <rect
-              x="-93"
-              y="-19"
-              width="186"
-              height="39"
-              rx="9"
-              fill="white"
-              stroke="#e0e2d7"
-            />
-            <text textAnchor="middle" y="5" className="place-label">
-              Community health centre
-            </text>
-          </g>
-          <text x="88" y="444" className="place-label">
-            Riverside apartments
-          </text>
-          <text x="385" y="90" className="place-label">
-            Fern House library
-          </text>
-          <text x="650" y="471" className="place-label">
-            Market square
-          </text>
+          {!north && (
+            <>
+              <g transform="translate(870 90)">
+                <rect
+                  x="-93"
+                  y="-19"
+                  width="186"
+                  height="39"
+                  rx="9"
+                  fill="white"
+                  stroke="#e0e2d7"
+                />
+                <text textAnchor="middle" y="5" className="place-label">
+                  Community health centre
+                </text>
+              </g>
+              <text x="88" y="444" className="place-label">
+                Riverside apartments
+              </text>
+              <text x="385" y="90" className="place-label">
+                Fern House library
+              </text>
+              <text x="650" y="471" className="place-label">
+                Market square
+              </text>
+            </>
+          )}
+          {north && (
+            <>
+              <text x="120" y="220" className="place-label">
+                Workers’ apartments
+              </text>
+              <text x="120" y="492" className="place-label">
+                Health centre
+              </text>
+              <text x="690" y="220" className="place-label">
+                Depot community room
+              </text>
+            </>
+          )}
         </g>
         <g transform="translate(945 565)">
           <path d="M0-13L-6 8 0 4 6 8Z" fill="#3b5240" />

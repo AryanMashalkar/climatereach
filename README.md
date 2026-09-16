@@ -94,3 +94,7 @@ The offline card contains no external assets. The service worker additionally ca
 The code and recording script are ready locally. Before submitting, publish a public repository, make sure the hosted demo can be opened by judges, record the video, and add any genuine user feedback. Do not claim real-world access verification or a completed pilot without doing that work.
 
 The original template and reusable UI primitives predate this project. The ClimateReach application, fixture, algorithm, tests, export, story, and documentation were authored in this work session. See `docs/DEVPOST.md` for the disclosure language.
+
+## Two-district demonstration
+
+Switch from Riverside to North Industrial while keeping the 300 m rest limit. The same engine finds no feasible corridor journey and computes the nearest seated stop at 850 m, a 550 m shortfall. Close that stop and the nearest becomes 1,450 m. Both districts are synthetic. This demonstrates infrastructure gaps without assigning a medical risk score.

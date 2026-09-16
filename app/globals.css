@@ -1672,3 +1672,28 @@ h1 em {
   border: 0;
   color: #7c896e;
 }
+
+.district-switcher {
+  margin: 20px 0;
+  padding: 14px;
+  border: 1px solid #dce1d2;
+  border-radius: 12px;
+  background: #f4f5ed;
+}
+.district-switcher label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.district-switcher button {
+  width: 100%;
+  background: white;
+}
+.district-switcher p {
+  font-size: 11px;
+  color: #65705d;
+  line-height: 1.5;
+  margin-top: 8px;
+}

@@ -187,6 +187,56 @@ test("Offline card escapes arbitrary checklist content", () => {
   assert.ok(!html.includes("<script>alert"));
   assert.ok(html.includes("Fictional demonstration"));
 });
+// A separate graph must drive both diagnosis and route validation.
+buildSync({
+  entryPoints: ["lib/districts.ts"],
+  bundle: true,
+  platform: "node",
+  format: "cjs",
+  outfile: "work/districts.cjs",
+});
+const { getDistrict } = require("../work/districts.cjs");
+const north = getDistrict("north-industrial");
+const np = { ...defaults, origin: "north-0", destination: "north-9" };
+test("Sparse district computes 850m first rest and 550m shortfall", () => {
+  const r = planRoute(np, north);
+  assert.equal(r.route, null);
+  assert.equal(r.nearestRest.distance, 850);
+  assert.match(r.suggestion, /550 m beyond/);
+});
+test("Nearest rest changes with closures and opening hours", () => {
+  assert.equal(
+    planRoute({ ...np, closed: ["north-rest-3"] }, north).nearestRest.distance,
+    1450,
+  );
+  assert.equal(planRoute({ ...np, hour: 19 }, north).nearestRest, null);
+});
+test("Sparse district can produce a feasible shorter journey", () => {
+  const p = { ...np, origin: "north-3", destination: "north-5", maxRest: 600 };
+  const r = planRoute(p, north);
+  assert.equal(r.route.distance, 600);
+  assert.deepEqual(validateRoute(r.route, p, r.budget, north), []);
+  const card = offlineHTML({
+    districtId: north.id,
+    version: north.dataVersion,
+    savedAt: new Date().toISOString(),
+    preferences: p,
+    route: r.route,
+    checklist: [],
+  });
+  assert.match(card, /North Industrial/);
+  assert.match(card, /Workers’ rest shelter/);
+  assert.ok(!card.includes("Cedar"));
+});
+test("District graphs remain isolated", () => {
+  assert.throws(() => planRoute(defaults, north));
+  assert.ok(planRoute(defaults).route);
+  assert.equal(
+    planRoute({ ...np, closed: ["cedar"] }, north).nearestRest.distance,
+    850,
+  );
+});
+
 const timings = [];
 for (let i = 0; i < 100; i++) {
   const t = performance.now();

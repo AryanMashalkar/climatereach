@@ -1,6 +1,8 @@
+import { getDistrict } from "./districts";
 import { destinations, stops } from "./neighborhood";
 import type { Preferences, Route } from "./routing";
 export type SavedPlan = {
+  districtId?: string;
   version: string;
   savedAt: string;
   preferences: Preferences;
@@ -16,9 +18,14 @@ const escape = (s: unknown) =>
       ]!,
   );
 export function offlineHTML(plan: SavedPlan) {
+  const {
+    destinations,
+    stops,
+    name: districtName,
+  } = getDistrict(plan.districtId);
   const name = (id: string) =>
     destinations.find((d) => d.id === id)?.name || id;
-  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ClimateReach · Offline journey</title><style>body{font:17px/1.65 system-ui,sans-serif;max-width:740px;margin:40px auto;padding:0 24px;color:#2a4032;background:#f7f8f0}h1{font-size:36px;line-height:1.2}h2{font-size:21px;margin-top:30px}.notice{background:#e9eddb;padding:18px;border-radius:12px}li{padding:9px 0}small{color:#66735d}button{background:#31593b;color:white;padding:12px 20px;border:0;border-radius:8px;font:inherit}@media print{button{display:none}}</style><header><strong>climatereach / OFFLINE TRIP CARD</strong></header><h1>${escape(name(plan.preferences.origin))}<br>→ ${escape(name(plan.preferences.destination))}</h1><p>${plan.route.distance} m · ${Math.ceil(plan.route.walkingMinutes)} minutes moving · ${plan.route.restStops.length} rest stops</p><div class="notice"><strong>Fictional demonstration neighborhood.</strong> Not real-world navigation. Saved ${escape(new Date(plan.savedAt).toLocaleString())}. Data version: ${escape(plan.version)}. Moving time excludes breaks. Availability is a snapshot at ${plan.preferences.hour}:00.</div><h2>Your preferences</h2><p>Rest at most every ${plan.preferences.maxRest} m. ${plan.preferences.stepFree ? "Avoid steps." : "Steps permitted."} ${plan.preferences.excludeUnknown ? "Unknown-access paths excluded." : "Unknown-access paths permitted."} Up to ${plan.preferences.detour} extra moving minutes.</p><h2>Your route</h2><ol>${plan.route.edges
+  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ClimateReach · Offline journey</title><style>body{font:17px/1.65 system-ui,sans-serif;max-width:740px;margin:40px auto;padding:0 24px;color:#2a4032;background:#f7f8f0}h1{font-size:36px;line-height:1.2}h2{font-size:21px;margin-top:30px}.notice{background:#e9eddb;padding:18px;border-radius:12px}li{padding:9px 0}small{color:#66735d}button{background:#31593b;color:white;padding:12px 20px;border:0;border-radius:8px;font:inherit}@media print{button{display:none}}</style><header><strong>climatereach / OFFLINE TRIP CARD</strong></header><h1>${escape(name(plan.preferences.origin))}<br>→ ${escape(name(plan.preferences.destination))}</h1><p>${plan.route.distance} m · ${Math.ceil(plan.route.walkingMinutes)} minutes moving · ${plan.route.restStops.length} rest stops</p><div class="notice"><strong>Fictional demonstration neighborhood: ${escape(districtName)}.</strong> Not real-world navigation. Saved ${escape(new Date(plan.savedAt).toLocaleString())}. Data version: ${escape(plan.version)}. Moving time excludes breaks. Availability is a snapshot at ${plan.preferences.hour}:00.</div><h2>Your preferences</h2><p>Rest at most every ${plan.preferences.maxRest} m. ${plan.preferences.stepFree ? "Avoid steps." : "Steps permitted."} ${plan.preferences.excludeUnknown ? "Unknown-access paths excluded." : "Unknown-access paths permitted."} Up to ${plan.preferences.detour} extra moving minutes.</p><h2>Your route</h2><ol>${plan.route.edges
     .map((e, i) => {
       const stop = stops.find(
         (s) =>

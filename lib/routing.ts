@@ -1,3 +1,4 @@
+import { getDistrict, type District } from "./districts";
 import {
   nodes,
   edges,
@@ -52,7 +53,7 @@ export const defaultPreferences: Preferences = {
   speed: 60,
   closed: [],
 };
-function validate(p: Preferences) {
+function validate(p: Preferences, { nodes }: District) {
   if (
     !nodes.some((n) => n.id === p.origin) ||
     !nodes.some((n) => n.id === p.destination)
@@ -73,7 +74,11 @@ function validate(p: Preferences) {
   )
     throw Error("Route preferences are outside the supported range.");
 }
-function search(p: Preferences, budget: number): Route | null {
+function search(
+  p: Preferences,
+  budget: number,
+  { edges, stops }: District,
+): Route | null {
   const restNodes = new Map(
     stops
       .filter(
@@ -183,8 +188,8 @@ function search(p: Preferences, budget: number): Route | null {
   }
   return null;
 }
-export function planRoute(p: Preferences) {
-  validate(p);
+export function planRoute(p: Preferences, district = getDistrict()) {
+  validate(p, district);
   const baseline = search(
     {
       ...p,
@@ -194,14 +199,19 @@ export function planRoute(p: Preferences) {
       maxRest: 0,
     },
     Infinity,
+    district,
   );
   const budget = (baseline?.distance || 0) + p.detour * p.speed;
-  const route = search(p, budget);
+  const route = search(p, budget, district);
   let reason = "";
   let suggestion = "";
   if (!route) {
-    const withoutRest = search({ ...p, maxRest: 0 }, budget);
-    const withoutBudget = search({ ...p, preferShade: false }, Infinity);
+    const withoutRest = search({ ...p, maxRest: 0 }, budget, district);
+    const withoutBudget = search(
+      { ...p, preferShade: false },
+      Infinity,
+      district,
+    );
     if (withoutBudget) {
       reason = "The available route needs a little more time.";
       suggestion = `Allow at least ${Math.ceil((withoutBudget.distance - (baseline?.distance || 0)) / p.speed)} extra walking minutes, or change your stop preferences.`;
@@ -215,9 +225,19 @@ export function planRoute(p: Preferences) {
         "Try a different destination or review unknown segments. Unknown access is not confirmed access.";
     }
   }
-  return { route, baseline, budget, reason, suggestion };
+  const nearestRest =
+    !route && p.maxRest > 0 ? nearestAvailableRest(p, district) : null;
+  if (!route && nearestRest && nearestRest.distance > p.maxRest) {
+    suggestion = `The nearest available seated stop, ${nearestRest.name}, is ${nearestRest.distance} m along eligible paths—${nearestRest.distance - p.maxRest} m beyond your ${p.maxRest} m rest limit. Your requirements have not been relaxed.`;
+  }
+  return { route, baseline, budget, reason, suggestion, nearestRest };
 }
-export function validateRoute(route: Route, p: Preferences, budget: number) {
+export function validateRoute(
+  route: Route,
+  p: Preferences,
+  budget: number,
+  { stops }: District = getDistrict(),
+) {
   let distance = 0,
     leg = 0;
   const available = new Set(
@@ -248,4 +268,26 @@ export function validateRoute(route: Route, p: Preferences, budget: number) {
   });
   if (distance > budget + 1e-8) issues.push("Detour exceeded");
   return issues;
+}
+
+export function nearestAvailableRest(p: Preferences, district = getDistrict()) {
+  validate(p, district);
+  let nearest: { id: string; name: string; distance: number } | null = null;
+  for (const stop of district.stops) {
+    if (
+      stop.node === p.origin ||
+      !stop.seating ||
+      !stopAvailable(stop, p.hour, p.closed) ||
+      (p.stepFree && !stop.stepFree)
+    )
+      continue;
+    const path = search(
+      { ...p, destination: stop.node, maxRest: 0, preferShade: false },
+      Infinity,
+      district,
+    );
+    if (path && (!nearest || path.distance < nearest.distance))
+      nearest = { id: stop.id, name: stop.name, distance: path.distance };
+  }
+  return nearest;
 }

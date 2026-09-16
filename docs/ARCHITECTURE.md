@@ -2,7 +2,7 @@
 
 ## Product boundary
 
-One working, explicitly synthetic district. No API key, external basemap, model server, or network request is needed to compute a route. This gives the demo deterministic behavior and makes offline use possible. A real pilot requires replacement data and independent accessibility review.
+Two working, explicitly synthetic districts. No API key, external basemap, model server, or network request is needed to compute a route. This gives the demo deterministic behavior and makes offline use possible. A real pilot requires replacement data and independent accessibility review.
 
 ## Pipeline
 
@@ -75,3 +75,49 @@ Before replacing the fixture:
 8. Run route audits with people who have the intended mobility requirements before any navigation claim.
 
 Do not relabel this fixture as real OSM data or field-verified information.
+
+## District switching (implemented)
+
+`lib/districts.ts` supplies a graph to the same search, validator, map, stop directory and offline exporter. Riverside has 24 nodes and 38 edges. North Industrial has 10 nodes and 9 edges: the first seated stop is 850 m from its default origin; subsequent seated stops are 600 m apart. These are authored network distances, not geographic measurements.
+
+Switching resets endpoints to district defaults and clears district-specific closures, while preserving rest interval, access requirements, shade preference, detour, hour and speed. Saved plans carry the district ID and data version; old Riverside snapshots without a district ID remain supported. Rest-gap diagnosis searches the eligible network to each available seated stop, with rest and detour limits removed only for this diagnostic. It reports the minimum distance; it never offers that diagnostic path as a feasible journey. Origin stops are excluded from this next-rest calculation. A nearby stop does not establish a complete feasible route.
+
+## Future integration: Overpass acquisition (not shipped)
+
+This bounded example fetches candidate pedestrian ways, buildings and amenities around central Pune. It has not been run or validated as a routable district. Bounding-box order is south, west, north, east. Syntax reference: [Overpass QL](https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL).
+
+```overpass
+[out:json][timeout:25][bbox:18.515,73.845,18.525,73.860];
+(
+  way[highway~"^(footway|pedestrian|path|steps|living_street|residential|service)$"];
+  nwr[amenity~"^(bench|drinking_water|library|community_centre)$"];
+  way[building];
+  relation[building];
+);
+out body;
+>;
+out skel qt;
+```
+
+A future importer must retain OSM IDs, timestamps and attribution; assemble relation geometry; split ways at actual shared nodes; respect levels, crossings, legal access and direction; calculate metric lengths; and record missing tags as unknown. A bench tag is a candidate for review, not verified availability. Review major-road sidewalks, missing crossings and disconnected components before routing. Cache a reviewed snapshot instead of requesting Overpass during a demonstration.
+
+## Future integration: SunCalc shadow geometry (not shipped)
+
+Pin `suncalc@1.9.0` for the convention below: altitude and azimuth are radians, with azimuth measured from south toward west. [Version 1.9.0 reference](https://github.com/mourner/suncalc/blob/v1.9.0/README.md). Do not silently upgrade: other versions may use different conventions.
+
+For a vertical building of height H on flat ground, solar altitude a gives horizontal shadow length L = H / tan(a). With that version's azimuth z, the shadow displacement in a local east/north metric coordinate system is `(L sin(z), L cos(z))`. This is a geometric derivation under the flat-ground assumption, not a temperature model.
+
+```ts
+const { altitude: a, azimuth: z } = SunCalc.getPosition(
+  instant,
+  latitude,
+  longitude,
+);
+if (a <= (5 * Math.PI) / 180 || !Number.isFinite(heightMetres)) {
+  return { status: "unknown" }; // low sun/night or missing height
+}
+const L = heightMetres / Math.tan(a);
+const shadowOffset = { east: L * Math.sin(z), north: L * Math.cos(z) };
+```
+
+Project building footprints into local metric coordinates, sweep each footprint along the displacement, union the resulting shadow polygons, and intersect that union with pedestrian segment geometry. Divide the covered length by total segment length, without double-counting overlapping shadows. Validate cardinal-direction examples and field observations at declared times. Missing heights, terrain, trees, cloud cover, seasons and position uncertainty prevent a claim of observed shade. Current ClimateReach uses authored shade fractions; no SunCalc or Overpass integration runs in the app.

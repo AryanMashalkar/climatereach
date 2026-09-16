@@ -1,4 +1,4 @@
-const CACHE = "climatereach-shell-v2";
+const CACHE = "climatereach-shell-v3";
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches

@@ -6,9 +6,9 @@ Validated on September 16, 2026 with Node.js v24.19.0 on Windows and headless Go
 
 - TypeScript check: passed.
 - Production Vinext/Cloudflare Worker build: completed.
-- Route unit/integration checks: 11 passed.
+- Route unit/integration checks: 15 passed.
 - Independent expanded-state oracle: matched on 48 configurations covering endpoints, rest limits, step restrictions, unknown-access exclusions, shade preferences, departure windows, closures, and detour budgets.
-- Production browser checks: 12 passed against the locally served compiled Worker.
+- Production browser checks: 16 passed against the locally served compiled Worker.
 - Browser page errors during that flow: none.
 - Mobile: 390 px viewport, no horizontal document overflow; screenshot visually reviewed.
 - Desktop: 1440 px viewport, screenshot visually reviewed.
@@ -56,3 +56,7 @@ npm start
 ```
 
 In another shell, set `QA_URL` to the exact local production URL printed by Wrangler, set `CHECK_OFFLINE=1`, and run `npm run test:browser`. On Windows the script defaults to installed Google Chrome; override `PLAYWRIGHT_CHROMIUM_EXECUTABLE` as needed. On other platforms install Playwright Chromium with `npx playwright install chromium`.
+
+## District expansion
+
+Verified computed 850 m nearest seated stop and 550 m shortfall; closure moves it to 1,450 m; after-hours returns no available stop; a shorter 600 m corridor journey is feasible; graph IDs remain isolated; offline export resolves corridor stop names. Browser checks cover preserved rest preferences, responsive corridor layout, closure diagnosis, switch-back routing, and saved district restoration across reloads. The 48-case independent oracle remains a Riverside comparison, not a claim of global routing validation.

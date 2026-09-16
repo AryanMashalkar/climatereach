@@ -66,6 +66,7 @@ import {
   DATA_VERSION,
   type CoolingStop,
 } from "@/lib/neighborhood";
+import { districts, getDistrict } from "@/lib/districts";
 import NeighborhoodMap from "@/components/neighborhood-map";
 import WarningNote from "@/components/warning-note";
 import { downloadPlan, type SavedPlan } from "@/lib/offline";
@@ -77,7 +78,7 @@ const PREP = [
   "Plan how anyone with mobility needs can receive assistance.",
 ];
 const nameOf = (id: string) =>
-  destinations.find((d) => d.id === id)?.name || id;
+  districts.flatMap((d) => d.destinations).find((d) => d.id === id)?.name || id;
 const StopIcon = ({ stop, size = 21 }: { stop: CoolingStop; size?: number }) =>
   stop.kind === "water" ? (
     <Droplets size={size} />
@@ -87,6 +88,9 @@ const StopIcon = ({ stop, size = 21 }: { stop: CoolingStop; size?: number }) =>
     <BookOpen size={size} />
   );
 export default function Home() {
+  const [districtId, setDistrictId] = useState("riverside");
+  const district = getDistrict(districtId);
+  const { destinations, edges, stops, dataVersion: DATA_VERSION } = district;
   const [p, setP] = useState<Preferences>(defaultPreferences);
   const [tab, setTab] = useState("journey");
   const [selected, setSelected] = useState<string | null>(null);
@@ -103,24 +107,24 @@ export default function Home() {
   const resultRef = useRef<HTMLDivElement>(null);
   const result = useMemo(() => {
     const started = typeof performance === "undefined" ? 0 : performance.now();
-    const answer = planRoute(p);
+    const answer = planRoute(p, district);
     return {
       ...answer,
       elapsed:
         typeof performance === "undefined" ? 0 : performance.now() - started,
     };
-  }, [p]);
+  }, [p, district]);
   const route = result.route;
   const patch = (v: Partial<Preferences>) => setP((x) => ({ ...x, ...v }));
   const selectedStop = stops.find((s) => s.id === selected);
-  const issues = route ? validateRoute(route, p, result.budget) : [];
+  const issues = route ? validateRoute(route, p, result.budget, district) : [];
   useEffect(() => {
     try {
       const stored = localStorage.getItem("climatereach-saved-v1");
       if (stored) {
         const value = JSON.parse(stored);
         if (
-          value.version === DATA_VERSION &&
+          value.version === getDistrict(value.districtId).dataVersion &&
           value.preferences &&
           value.route?.nodes
         )
@@ -213,7 +217,7 @@ export default function Home() {
           )
             throw Error("metres must be an integer between 150 and 600");
           const next = { ...p, maxRest: v.metres! };
-          const answer = planRoute(next);
+          const answer = planRoute(next, district);
           setP(next);
           await new Promise((resolve) =>
             requestAnimationFrame(() => requestAnimationFrame(resolve)),
@@ -234,7 +238,7 @@ export default function Home() {
       } catch {}
     }
     return () => controller.abort();
-  }, [p, result]);
+  }, [p, result, district]);
   const closeStop = (id: string) => {
     const closing = !p.closed.includes(id);
     patch({
@@ -249,6 +253,7 @@ export default function Home() {
   const savePlan = () => {
     if (!route) return;
     const plan: SavedPlan = {
+      districtId,
       version: DATA_VERSION,
       savedAt: new Date().toISOString(),
       preferences: { ...p },
@@ -324,7 +329,10 @@ export default function Home() {
     setDemo(step);
     setTab("journey");
     setSelected(null);
-    if (step >= 0) setP(demoSteps[step].prefs);
+    if (step >= 0) {
+      setDistrictId("riverside");
+      setP(demoSteps[step].prefs);
+    }
   };
   const available = stops.filter((s) => stopAvailable(s, p.hour, p.closed));
   const filtered = stops.filter(
@@ -417,6 +425,39 @@ export default function Home() {
             More shade. A place to pause.
             <br />A route that works for you.
           </p>
+          <div className="district-switcher">
+            <label htmlFor="district-select">DEMO DISTRICT</label>
+            <Select
+              value={districtId}
+              onValueChange={(id) => {
+                const next = getDistrict(id);
+                setDistrictId(id);
+                setP((old) => ({
+                  ...old,
+                  origin: next.destinations[0].id,
+                  destination: next.destinations[1].id,
+                  closed: [],
+                }));
+                setSelected(null);
+                setDemo(-1);
+                toast(
+                  "District changed. Your travel preferences are preserved.",
+                );
+              }}
+            >
+              <SelectTrigger id="district-select" aria-label="Demo district">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {districts.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p>{district.description}. Fictional data.</p>
+          </div>
           <div className="location-stack">
             {(["origin", "destination"] as const).map((key, i) => (
               <div className="location-row" key={key}>
@@ -599,11 +640,13 @@ export default function Home() {
                   onClick={() => setModal("evidence")}
                 >
                   <MapPin size={15} />
-                  Riverside · demo district
+                  {district.name} · demo district
                 </button>
               </div>
               <div className="map-canvas">
                 <NeighborhoodMap
+                  district={district}
+                  key={districtId}
                   route={route}
                   baseline={result.baseline}
                   selected={selected}
@@ -713,7 +756,10 @@ export default function Home() {
                     <p>{result.suggestion}</p>
                     <button
                       className="text-action"
-                      onClick={() => setP({ ...defaultPreferences })}
+                      onClick={() => {
+                        setDistrictId("riverside");
+                        setP({ ...defaultPreferences });
+                      }}
                     >
                       <RotateCcw size={14} />
                       Restore example journey
@@ -1119,6 +1165,7 @@ export default function Home() {
                     [
                       JSON.stringify(
                         {
+                          districtId,
                           dataVersion: DATA_VERSION,
                           preferences: p,
                           result,
@@ -1172,6 +1219,7 @@ export default function Home() {
                   <button
                     className="secondary-action"
                     onClick={() => {
+                      setDistrictId(saved.districtId || "riverside");
                       setP(saved.preferences);
                       setTab("journey");
                       setModal(null);
@@ -1283,6 +1331,7 @@ export default function Home() {
                   className="secondary-action"
                   onClick={() =>
                     downloadPlan({
+                      districtId,
                       version: DATA_VERSION,
                       savedAt: new Date().toISOString(),
                       preferences: p,
@@ -1303,6 +1352,7 @@ export default function Home() {
               <button
                 className="text-action"
                 onClick={() => {
+                  setDistrictId("riverside");
                   setP(defaultPreferences);
                   setModal(null);
                 }}
