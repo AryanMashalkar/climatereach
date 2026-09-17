@@ -1,5 +1,11 @@
 # ClimateReach
 
+## Live demo
+
+**[Open ClimateReach — no sign-in required](https://climatereach.vercel.app)**
+
+Try the story, then switch between Riverside and North Industrial to compare the same travel needs against different stop availability. Both districts use clearly labeled synthetic data.
+
 **A gentler way there.** A climate-adaptation journey planner that accounts for shade, steps, rest intervals, and available cooling places.
 
 Built for NextStep Hacks 2026 / Earth Forward. This repository contains a working application and a deterministic route engine, not a set of screen mockups.
@@ -91,7 +97,7 @@ The offline card contains no external assets. The service worker additionally ca
 
 ## Submission readiness
 
-The code and recording script are ready locally. Before submitting, publish a public repository, make sure the hosted demo can be opened by judges, record the video, and add any genuine user feedback. Do not claim real-world access verification or a completed pilot without doing that work.
+The public repository and Vercel demo are available. Before submitting, upload the demo video and complete the Devpost submission. Add any genuine user feedback only after obtaining it. Do not claim real-world access verification or a completed pilot without doing that work.
 
 The original template and reusable UI primitives predate this project. The ClimateReach application, fixture, algorithm, tests, export, story, and documentation were authored in this work session. See `docs/DEVPOST.md` for the disclosure language.
 

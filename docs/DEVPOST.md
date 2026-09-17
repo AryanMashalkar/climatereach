@@ -38,11 +38,14 @@ Pilot one real neighborhood with verified cooling places and people with mobilit
 
 The Sites/Vinext starter and reusable third-party UI components existed before this work. The ClimateReach-specific route engine, synthetic dataset, interface, closure workflow, offline export, preparation features, tests, and documentation were developed during this session. Review the event’s allowed build dates and your commit history before submitting this disclosure.
 
+## Submission links
+
+- Live demo: https://climatereach.vercel.app
+- Source: https://github.com/AryanMashalkar/climatereach
+
 ## Submission items still owned by the team
 
-- Record and upload the under-five-minute video.
-- Publish this repository publicly after restoring GitHub authentication.
-- Confirm the submitted demo URL is accessible to judges without owner-only sign-in.
+- Upload the under-five-minute video (the local recording predates the district switcher).
 - Add genuine user feedback only after obtaining it and permission to quote it.
 
 ## Two-district demonstration
