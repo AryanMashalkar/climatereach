@@ -1,0 +1,8 @@
+work
+outputs
+dist
+.wrangler
+.sites-runtime
+.openai
+.next
+node_modules
