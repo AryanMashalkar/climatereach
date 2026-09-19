@@ -9,6 +9,12 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
   },
+  openGraph: {
+    title: "ClimateReach — A gentler way there",
+    description:
+      "Plan a journey around your needs, with shade-aware routing, places to pause, and offline preparation.",
+    images: ["/thumbnail.jpg"],
+  },
 };
 
 export default function RootLayout({
